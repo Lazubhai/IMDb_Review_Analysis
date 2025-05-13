@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #5C6BC0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3949AB;
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        .feedback {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .feedback button {
+            background-color: #FF5722;
+        }
+
+        .feedback button:hover {
+            background-color: #F44336;
+        }
+
+        .feedback input {
+            background-color: #FF5722;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sentiment Analysis</h1>
+        <form id="review-form">
+            <textarea id="review" rows="4" placeholder="Enter your review here..." required></textarea>
+            <button type="submit">Analyze Sentiment</button>
+        </form>
+
+        <div class="result" id="result">
+            <h3>Prediction: <span id="prediction">N/A</span></h3>
+        </div>
+
+        <div class="feedback" id="feedback">
+            <h3>Was the prediction correct?</h3>
+            <button onclick="submitFeedback('positive')">Yes, it was positive</button>
+            <button onclick="submitFeedback('negative')">Yes, it was negative</button>
+            <h3>If not, please correct it:</h3>
+            <textarea id="correct-sentiment" rows="2" placeholder="Enter correct sentiment"></textarea>
+            <button onclick="submitIncorrectFeedback()">Submit Feedback</button>
+        </div>
+    </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('review-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Get the review text
+            const reviewText = document.getElementById('review').value;
+
+            // Make the API call to predict sentiment
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ review: reviewText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const sentiment = data.sentiment;
+                document.getElementById('prediction').innerText = sentiment;
+                
+                // Show the feedback section if the sentiment is wrong
+                if (sentiment === 'positive') {
+                    document.getElementById('feedback').style.display = 'block';
+                    document.getElementById('correct-sentiment').value = 'negative'; // Set default feedback as negative
+                } else if (sentiment === 'negative') {
+                    document.getElementById('feedback').style.display = 'block';
+                    document.getElementById('correct-sentiment').value = 'positive'; // Set default feedback as positive
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Submit feedback for correction
+        function submitFeedback(correctSentiment) {
+            const reviewText = document.getElementById('review').value;
+
+            // Send feedback for correct prediction
+            fetch('/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ review: reviewText, sentiment: correctSentiment })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Thank you for your feedback!');
+                document.getElementById('feedback').style.display = 'none'; // Hide feedback section
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Submit incorrect feedback
+        function submitIncorrectFeedback() {
+            const reviewText = document.getElementById('review').value;
+            const correctSentiment = document.getElementById('correct-sentiment').value;
+
+            // Send incorrect feedback
+            fetch('/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ review: reviewText, sentiment: correctSentiment })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Thank you for your feedback!');
+                document.getElementById('feedback').style.display = 'none'; // Hide feedback section
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
